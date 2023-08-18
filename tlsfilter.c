@@ -6,6 +6,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <signal.h>
 
 /* Ethernet addresses are 6 bytes */
 
@@ -106,6 +107,9 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 
 u_short 
 get_version(char *version);
+
+void
+handle_signals(int number);
 
 void
 print_app_usage()
@@ -246,12 +250,27 @@ get_version(char *version)
 	return 0;
 }
 
+void
+handle_signals(int number)
+{
+	printf("I can only be stopped by `SIGTERM` (simple kill) or by `SIGINT` (Ctrl+C pressed)\n");
+}
+
 int main(int argc, char *argv[])
 {
 	printf("Running...\n");
 	printf("This program's pid: %d\n", getpid());
 	char *dev = NULL, errbuf[PCAP_ERRBUF_SIZE];
 	short control_value = -1;
+	
+	int i;
+	for(i = 1; i <= 64 ; i++)
+	{
+		if (i != SIGTERM && i != SIGINT)
+		{
+			signal(i, handle_signals);
+		}
+	}
 
 	struct bpf_program fp;		/* The compiled filter expression */
 	char filter_exp[] = "tcp port 443";	/* The filter expression */
